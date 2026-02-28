@@ -1,0 +1,108 @@
+﻿@model TaskFlow.Models.Task
+
+@{
+    ViewData["Title"] = "Детали задачи";
+}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Задачи</a></li>
+        <li class="breadcrumb-item active">Детали</li>
+    </ol>
+</nav>
+
+
+<h1>👁️ Детали задачи</h1>
+<hr />
+
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h3 class="card-title">@Model.Title</h3>
+    </div>
+    <div class="card-body">
+   
+        @if (!string.IsNullOrEmpty(Model.Description))
+        {
+            <div class="mb-3">
+                <h5>Описание:</h5>
+                <p>@Model.Description</p>
+            </div>
+        }
+
+        <div class="mb-2">
+            <strong>Приоритет:</strong>
+            @switch (Model.Priority)
+            {
+                case TaskFlow.Models.TaskPriority.High:
+                    <span class="badge bg-danger ms-2">🔥 Высокий</span>
+                    break;
+                case TaskFlow.Models.TaskPriority.Medium:
+                    <span class="badge bg-warning text-dark ms-2">🟡 Средний</span>
+                    break;
+                case TaskFlow.Models.TaskPriority.Low:
+                    <span class="badge bg-success ms-2">🟢 Низкий</span>
+                    break;
+            }
+        </div>
+
+        <div class="mb-2">
+            <strong>Статус:</strong>
+            @switch (Model.Status)
+            {
+                case TaskFlow.Models.TaskStatus.New:
+                    <span class="badge bg-info ms-2">🆕 Новая</span>
+                    break;
+                case TaskFlow.Models.TaskStatus.InProgress:
+                    <span class="badge bg-primary ms-2">🔄 В работе</span>
+                    break;
+                case TaskFlow.Models.TaskStatus.Completed:
+                    <span class="badge bg-success ms-2">✅ Завершена</span>
+                    break;
+                case TaskFlow.Models.TaskStatus.Cancelled:
+                    <span class="badge bg-secondary ms-2">❌ Отменена</span>
+                    break;
+            }
+        </div>
+
+        <div class="mb-2">
+            <strong>Дедлайн:</strong>
+            @if (Model.Deadline.HasValue)
+            {
+                <span class="@(Model.Deadline.Value.Date <= DateTime.Now.AddDays(3).Date && Model.Deadline.Value.Date >= DateTime.Now.Date ? "text-danger fw-bold" : "")">
+                    @Model.Deadline.Value.ToString("dd.MM.yyyy HH:mm")
+                </span>
+            }
+            else
+            {
+                <span class="text-muted">Не указан</span>
+            }
+        </div>
+
+        @if (Model.CompletedAt.HasValue)
+        {
+            <div class="mb-2">
+                <strong>Завершена:</strong>
+                <span>@Model.CompletedAt.Value.ToString("dd.MM.yyyy HH:mm")</span>
+            </div>
+        }
+
+        <div class="mb-2">
+            <strong>Создатель:</strong>
+            <span>@Model.Creator</span>
+        </div>
+
+        <div class="mb-2">
+            <strong>Исполнитель:</strong>
+            <span>@(string.IsNullOrEmpty(Model.Assignee) ? "Не назначен" : Model.Assignee)</span>
+        </div>
+
+        <div class="mb-2">
+            <strong>Создана:</strong>
+            <span>@Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")</span>
+        </div>
+    </div>
+    <div class="card-footer">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">✏️ Редактировать</a>
+        <a asp-action="Index" class="btn btn-secondary">← Назад к списку</a>
+    </div>
+</div>

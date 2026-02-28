@@ -1,0 +1,116 @@
+﻿@model IEnumerable<TaskFlow.Models.Task>
+
+@{
+    ViewData["Title"] = "Список задач";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>📋 Список задач</h1>
+    <a asp-action="Create" class="btn btn-success">
+        <i class="bi bi-plus-circle"></i> Создать задачу
+    </a>
+</div>
+
+<!-- Фильтры -->
+<div class="btn-group mb-3">
+    <a asp-action="Index" class="btn btn-outline-secondary @(ViewBag.CurrentStatus == null ? "active" : "")">
+        Все
+    </a>
+    <a asp-action="Index" asp-route-status="New" class="btn btn-outline-info @(ViewBag.CurrentStatus == "New" ? "active" : "")">
+        Новые
+    </a>
+    <a asp-action="Index" asp-route-status="InProgress" class="btn btn-outline-primary @(ViewBag.CurrentStatus == "InProgress" ? "active" : "")">
+        В работе
+    </a>
+    <a asp-action="Index" asp-route-status="Completed" class="btn btn-outline-success @(ViewBag.CurrentStatus == "Completed" ? "active" : "")">
+        Завершённые
+    </a>
+</div>
+
+@if (Model.Any())
+{
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Задача</th>
+                    <th>Приоритет</th>
+                    <th>Статус</th>
+                    <th>Дедлайн</th>
+                    <th>Исполнитель</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            <strong>@item.Title</strong>
+                            @if (!string.IsNullOrEmpty(item.Description))
+                            {
+                                <br />
+                                <small class="text-muted">@item.Description</small>
+                            }
+                        </td>
+                        <td>
+                            @switch (item.Priority)
+                            {
+                                case TaskFlow.Models.TaskPriority.High:
+                                    <span class="badge bg-danger">🔥 Высокий</span>
+                                    break;
+                                case TaskFlow.Models.TaskPriority.Medium:
+                                    <span class="badge bg-warning text-dark">🟡 Средний</span>
+                                    break;
+                                case TaskFlow.Models.TaskPriority.Low:
+                                    <span class="badge bg-success">🟢 Низкий</span>
+                                    break;
+                            }
+                        </td>
+                        <td>
+                            @switch (item.Status)
+                            {
+                                case TaskFlow.Models.TaskStatus.New:
+                                    <span class="badge bg-info">🆕 Новая</span>
+                                    break;
+                                case TaskFlow.Models.TaskStatus.InProgress:
+                                    <span class="badge bg-primary">🔄 В работе</span>
+                                    break;
+                                case TaskFlow.Models.TaskStatus.Completed:
+                                    <span class="badge bg-success">✅ Завершена</span>
+                                    break;
+                                case TaskFlow.Models.TaskStatus.Cancelled:
+                                    <span class="badge bg-secondary">❌ Отменена</span>
+                                    break;
+                            }
+                        </td>
+                        <td>
+                            @if (item.Deadline.HasValue)
+                            {
+                                <span class="@(item.Deadline.Value.Date <= DateTime.Now.AddDays(3).Date && item.Deadline.Value.Date >= DateTime.Now.Date ? "text-danger fw-bold" : "")">
+                                    @item.Deadline.Value.ToString("dd.MM.yyyy")
+                                </span>
+                            }
+                        </td>
+                        <td>
+                            @item.Assignee
+                        </td>
+                        <td>
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-primary">✏️</a>
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">👁️</a>
+                            <form asp-action="Delete" asp-route-id="@item.Id" method="post" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Удалить задачу?')">🗑️</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> Список задач пуст. <a asp-action="Create">Создайте первую задачу!</a>
+    </div>
+}
