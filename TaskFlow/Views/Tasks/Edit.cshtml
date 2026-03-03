@@ -4,18 +4,16 @@
     ViewData["Title"] = "Редактировать задачу";
 }
 
-<nav aria-label="breadcrumb">
+<nav aria-label="breadcrumb" class="mb-3">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a asp-action="Index">Задачи</a></li>
-        <li class="breadcrumb-item active">Редактировать</li>
+        <li class="breadcrumb-item"><a asp-action="Index">Список задач</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Редактировать задачу</li>
     </ol>
 </nav>
-
-<h1>✏️ Редактировать задачу</h1>
-<hr />
+<h1 class="mb-4">✏️ Редактировать задачу</h1>
 
 <div class="row">
-    <div class="col-md-6">
+    <div class="col-md-8">
         <form asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="Id" />
@@ -61,8 +59,20 @@
 
             <div class="mb-3">
                 <label asp-for="CompletedAt" class="form-label">Дата завершения</label>
-                <input asp-for="CompletedAt" class="form-control" type="datetime-local" />
+                <input asp-for="CompletedAt" class="form-control" type="datetime-local" readonly />
                 <span asp-validation-for="CompletedAt" class="text-danger"></span>
+                <small class="text-muted">Устанавливается автоматически при завершении задачи</small>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Progress" class="form-label"></label>
+                <input asp-for="Progress" class="form-control" type="number" min="0" max="100" />
+                <span asp-validation-for="Progress" class="text-danger"></span>
+                <div class="progress mt-2" style="height: 20px;">
+                    <div class="progress-bar" role="progressbar" style="width: @Model.Progress%" aria-valuenow="@Model.Progress" aria-valuemin="0" aria-valuemax="100">
+                        @Model.Progress%
+                    </div>
+                </div>
             </div>
 
             <div class="mb-3">
@@ -78,8 +88,12 @@
             </div>
 
             <div class="mb-3">
-                <input type="submit" value="Сохранить" class="btn btn-primary" />
-                <a asp-action="Index" class="btn btn-secondary">Отмена</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i> Сохранить
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Отмена
+                </a>
             </div>
         </form>
     </div>

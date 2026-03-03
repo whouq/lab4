@@ -3,40 +3,113 @@
 @{
     ViewData["Title"] = "Список задач";
 }
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active" aria-current="page">Список задач</li>
+    </ol>
+</nav>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>📋 Список задач</h1>
+    <h1 class="display-6 mb-0">📋 Список задач</h1>
     <a asp-action="Create" class="btn btn-success">
         <i class="bi bi-plus-circle"></i> Создать задачу
     </a>
 </div>
 
-<!-- Фильтры -->
-<div class="btn-group mb-3">
-    <a asp-action="Index" class="btn btn-outline-secondary @(ViewBag.CurrentStatus == null ? "active" : "")">
-        Все
-    </a>
-    <a asp-action="Index" asp-route-status="New" class="btn btn-outline-info @(ViewBag.CurrentStatus == "New" ? "active" : "")">
-        Новые
-    </a>
-    <a asp-action="Index" asp-route-status="InProgress" class="btn btn-outline-primary @(ViewBag.CurrentStatus == "InProgress" ? "active" : "")">
-        В работе
-    </a>
-    <a asp-action="Index" asp-route-status="Completed" class="btn btn-outline-success @(ViewBag.CurrentStatus == "Completed" ? "active" : "")">
-        Завершённые
-    </a>
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title mb-3">Фильтры</h5>
+        <div class="row">
+            <div class="col-md-6 mb-2">
+                <div class="btn-group w-100" role="group">
+                    <a asp-action="Index" class="btn btn-outline-secondary @(ViewBag.CurrentStatus == null ? "active" : "")">
+                        Все
+                    </a>
+                    <a asp-action="Index" asp-route-status="New" class="btn btn-outline-info @(ViewBag.CurrentStatus == "New" ? "active" : "")">
+                        🆕 Новые
+                    </a>
+                    <a asp-action="Index" asp-route-status="InProgress" class="btn btn-outline-primary @(ViewBag.CurrentStatus == "InProgress" ? "active" : "")">
+                        🔄 В работе
+                    </a>
+                    <a asp-action="Index" asp-route-status="Completed" class="btn btn-outline-success @(ViewBag.CurrentStatus == "Completed" ? "active" : "")">
+                        ✅ Завершённые
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-6 mb-2">
+                <div class="btn-group w-100" role="group">
+                    <a asp-action="Index" class="btn btn-outline-secondary @(ViewBag.CurrentPriority == null ? "active" : "")">
+                        Все приоритеты
+                    </a>
+                    <a asp-action="Index" asp-route-priority="Low" class="btn btn-outline-success @(ViewBag.CurrentPriority == "Low" ? "active" : "")">
+                        🟢 Низкий
+                    </a>
+                    <a asp-action="Index" asp-route-priority="Medium" class="btn btn-outline-warning @(ViewBag.CurrentPriority == "Medium" ? "active" : "")">
+                        🟡 Средний
+                    </a>
+                    <a asp-action="Index" asp-route-priority="High" class="btn btn-outline-danger @(ViewBag.CurrentPriority == "High" ? "active" : "")">
+                        🔥 Высокий
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
+        <i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+    </div>
+}
+
+<div class="row mb-3">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h5 class="card-title">Всего задач</h5>
+                <h2 class="card-text">@Model.Count()</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h5 class="card-title">Завершено</h5>
+                <h2 class="card-text">@Model.Count(t => t.Status == TaskFlow.Models.TaskStatus.Completed)</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <h5 class="card-title">В работе</h5>
+                <h2 class="card-text">@Model.Count(t => t.Status == TaskFlow.Models.TaskStatus.InProgress)</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <h5 class="card-title">Скоро дедлайн</h5>
+                <h2 class="card-text">@Model.Count(t => t.Deadline.HasValue && t.Deadline.Value.Date <= DateTime.Now.AddDays(3).Date && t.Deadline.Value.Date >= DateTime.Now.Date && t.Status != TaskFlow.Models.TaskStatus.Completed)</h2>
+            </div>
+        </div>
+    </div>
 </div>
 
 @if (Model.Any())
 {
     <div class="table-responsive">
-        <table class="table table-hover">
-            <thead class="table-light">
+        <table class="table table-hover table-striped">
+            <thead class="table-dark">
                 <tr>
                     <th>Задача</th>
                     <th>Приоритет</th>
                     <th>Статус</th>
                     <th>Дедлайн</th>
+                    <th>Прогресс</th>
                     <th>Исполнитель</th>
                     <th>Действия</th>
                 </tr>
@@ -44,7 +117,7 @@
             <tbody>
                 @foreach (var item in Model)
                 {
-                    <tr>
+                    <tr class="@(item.Status == TaskFlow.Models.TaskStatus.Completed ? "table-success" : "")">
                         <td>
                             <strong>@item.Title</strong>
                             @if (!string.IsNullOrEmpty(item.Description))
@@ -68,38 +141,54 @@
                             }
                         </td>
                         <td>
-                            @switch (item.Status)
-                            {
-                                case TaskFlow.Models.TaskStatus.New:
-                                    <span class="badge bg-info">🆕 Новая</span>
-                                    break;
-                                case TaskFlow.Models.TaskStatus.InProgress:
-                                    <span class="badge bg-primary">🔄 В работе</span>
-                                    break;
-                                case TaskFlow.Models.TaskStatus.Completed:
-                                    <span class="badge bg-success">✅ Завершена</span>
-                                    break;
-                                case TaskFlow.Models.TaskStatus.Cancelled:
-                                    <span class="badge bg-secondary">❌ Отменена</span>
-                                    break;
-                            }
+                            <form asp-action="UpdateStatus" method="post" class="d-inline">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <select name="status" class="form-select form-select-sm status-select" onchange="this.form.submit()">
+                                    <option value="1" selected="@(item.Status == TaskFlow.Models.TaskStatus.New)">🆕 Новая</option>
+                                    <option value="2" selected="@(item.Status == TaskFlow.Models.TaskStatus.InProgress)">🔄 В работе</option>
+                                    <option value="3" selected="@(item.Status == TaskFlow.Models.TaskStatus.Completed)">✅ Завершена</option>
+                                    <option value="4" selected="@(item.Status == TaskFlow.Models.TaskStatus.Cancelled)">❌ Отменена</option>
+                                </select>
+                            </form>
                         </td>
                         <td>
                             @if (item.Deadline.HasValue)
                             {
-                                <span class="@(item.Deadline.Value.Date <= DateTime.Now.AddDays(3).Date && item.Deadline.Value.Date >= DateTime.Now.Date ? "text-danger fw-bold" : "")">
-                                    @item.Deadline.Value.ToString("dd.MM.yyyy")
+                                <span class="@(item.Deadline.Value.Date <= DateTime.Now.AddDays(3).Date && item.Deadline.Value.Date >= DateTime.Now.Date && item.Status != TaskFlow.Models.TaskStatus.Completed ? "text-danger fw-bold" : "")">
+                                    @item.Deadline.Value.ToString("dd.MM.yyyy HH:mm")
                                 </span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
                             }
                         </td>
                         <td>
-                            @item.Assignee
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar @(GetProgressClass(item.Progress))"
+                                     role="progressbar"
+                                     style="width: @item.Progress%"
+                                     aria-valuenow="@item.Progress"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                    @item.Progress%
+                                </div>
+                            </div>
                         </td>
                         <td>
-                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-primary">✏️</a>
-                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info">👁️</a>
-                            <form asp-action="Delete" asp-route-id="@item.Id" method="post" style="display:inline;">
-                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Удалить задачу?')">🗑️</button>
+                            @(string.IsNullOrEmpty(item.Assignee) ? "-" : item.Assignee)
+                        </td>
+                        <td>
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-primary" title="Редактировать">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-info" title="Просмотреть">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <form asp-action="Delete" asp-route-id="@item.Id" method="post" style="display:inline;" onsubmit="return confirm('Вы уверены, что хотите удалить эту задачу?');">
+                                <button type="submit" class="btn btn-sm btn-danger" title="Удалить">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </form>
                         </td>
                     </tr>
@@ -110,7 +199,36 @@
 }
 else
 {
-    <div class="alert alert-info">
-        <i class="bi bi-info-circle"></i> Список задач пуст. <a asp-action="Create">Создайте первую задачу!</a>
+    <div class="alert alert-info text-center">
+        <i class="bi bi-info-circle" style="font-size: 3rem;"></i>
+        <h4 class="mt-3">Список задач пуст</h4>
+        <p class="mb-0">Создайте свою первую задачу, чтобы начать работу!</p>
+        <a asp-action="Create" class="btn btn-primary mt-3">Создать задачу</a>
     </div>
+}
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          
+            document.querySelectorAll('.status-select').forEach(select => {
+                select.addEventListener('change', function() {
+                    if (confirm('Изменить статус задачи?')) {
+                        this.closest('form').submit();
+                    } else {
+                        this.selectedIndex = this.dataset.originalIndex || 0;
+                    }
+                });
+            });
+        });
+    </script>
+}
+
+@functions {
+    string GetProgressClass(int progress)
+    {
+        if (progress < 30) return "bg-danger";
+        if (progress < 70) return "bg-warning";
+        return "bg-success";
+    }
 }

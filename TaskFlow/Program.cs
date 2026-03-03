@@ -3,16 +3,13 @@ using TaskFlow.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Добавление контекста базы данных
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Добавление контроллеров и представлений
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-// Настройка конвейера обработки запросов
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -28,11 +25,19 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Tasks}/{action=Index}/{id?}");
 
-// Создание базы данных при запуске
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    dbContext.Database.EnsureCreated();
+
+    dbContext.Database.Migrate();
+
+    if (!dbContext.Tasks.Any())
+    {
+        dbContext.Tasks.AddRange(
+            
+        );
+        dbContext.SaveChanges();
+    }
 }
 
 app.Run();

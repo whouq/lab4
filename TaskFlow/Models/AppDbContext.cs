@@ -21,6 +21,18 @@ namespace TaskFlow.Models
             modelBuilder.Entity<Task>()
                 .Property(t => t.Status)
                 .HasDefaultValue(TaskStatus.New);
+
+            modelBuilder.Entity<Task>()
+                .Property(t => t.Progress)
+                .HasDefaultValue(0);
+            modelBuilder.Entity<Task>()
+                .HasIndex(t => t.Status);
+
+            modelBuilder.Entity<Task>()
+                .HasIndex(t => t.Deadline);
+
+            modelBuilder.Entity<Task>()
+                .HasIndex(t => t.Assignee);
         }
     }
 }

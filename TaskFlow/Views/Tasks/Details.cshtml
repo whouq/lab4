@@ -3,33 +3,33 @@
 @{
     ViewData["Title"] = "Детали задачи";
 }
-<nav aria-label="breadcrumb">
+
+<nav aria-label="breadcrumb" class="mb-3">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a asp-action="Index">Задачи</a></li>
-        <li class="breadcrumb-item active">Детали</li>
+        <li class="breadcrumb-item"><a asp-action="Index">Список задач</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Детали задачи</li>
     </ol>
 </nav>
 
 
-<h1>👁️ Детали задачи</h1>
-<hr />
+<h1 class="mb-4">👁️ Детали задачи</h1>
 
 
 <div class="card">
     <div class="card-header bg-primary text-white">
-        <h3 class="card-title">@Model.Title</h3>
+        <h3 class="card-title mb-0">@Model.Title</h3>
     </div>
     <div class="card-body">
-   
+      
         @if (!string.IsNullOrEmpty(Model.Description))
         {
-            <div class="mb-3">
-                <h5>Описание:</h5>
-                <p>@Model.Description</p>
+            <div class="mb-4">
+                <h5 class="text-muted">Описание:</h5>
+                <p class="lead">@Model.Description</p>
             </div>
         }
 
-        <div class="mb-2">
+        <div class="mb-3">
             <strong>Приоритет:</strong>
             @switch (Model.Priority)
             {
@@ -45,7 +45,7 @@
             }
         </div>
 
-        <div class="mb-2">
+        <div class="mb-3">
             <strong>Статус:</strong>
             @switch (Model.Status)
             {
@@ -64,11 +64,25 @@
             }
         </div>
 
-        <div class="mb-2">
+        <div class="mb-3">
+            <strong>Прогресс:</strong>
+            <div class="progress mt-2" style="height: 25px;">
+                <div class="progress-bar @(GetProgressClass(Model.Progress))"
+                     role="progressbar"
+                     style="width: @Model.Progress%"
+                     aria-valuenow="@Model.Progress"
+                     aria-valuemin="0"
+                     aria-valuemax="100">
+                    @Model.Progress%
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-3">
             <strong>Дедлайн:</strong>
             @if (Model.Deadline.HasValue)
             {
-                <span class="@(Model.Deadline.Value.Date <= DateTime.Now.AddDays(3).Date && Model.Deadline.Value.Date >= DateTime.Now.Date ? "text-danger fw-bold" : "")">
+                <span class="@(Model.Deadline.Value.Date <= DateTime.Now.AddDays(3).Date && Model.Deadline.Value.Date >= DateTime.Now.Date && Model.Status != TaskFlow.Models.TaskStatus.Completed ? "text-danger fw-bold" : "")">
                     @Model.Deadline.Value.ToString("dd.MM.yyyy HH:mm")
                 </span>
             }
@@ -80,29 +94,42 @@
 
         @if (Model.CompletedAt.HasValue)
         {
-            <div class="mb-2">
+            <div class="mb-3">
                 <strong>Завершена:</strong>
                 <span>@Model.CompletedAt.Value.ToString("dd.MM.yyyy HH:mm")</span>
             </div>
         }
 
-        <div class="mb-2">
+        <div class="mb-3">
             <strong>Создатель:</strong>
             <span>@Model.Creator</span>
         </div>
 
-        <div class="mb-2">
+        <div class="mb-3">
             <strong>Исполнитель:</strong>
             <span>@(string.IsNullOrEmpty(Model.Assignee) ? "Не назначен" : Model.Assignee)</span>
         </div>
 
-        <div class="mb-2">
+        <div class="mb-3">
             <strong>Создана:</strong>
             <span>@Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")</span>
         </div>
     </div>
     <div class="card-footer">
-        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">✏️ Редактировать</a>
-        <a asp-action="Index" class="btn btn-secondary">← Назад к списку</a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">
+            <i class="bi bi-pencil"></i> Редактировать
+        </a>
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Назад к списку
+        </a>
     </div>
 </div>
+
+@functions {
+    string GetProgressClass(int progress)
+    {
+        if (progress < 30) return "bg-danger";
+        if (progress < 70) return "bg-warning";
+        return "bg-success";
+    }
+}

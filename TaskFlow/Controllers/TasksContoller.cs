@@ -13,51 +13,80 @@ namespace TaskFlow.Controllers
             _context = context;
         }
 
-        public IActionResult Index(string? status)
+        public async Task<IActionResult> Index(string? status, string? priority)
         {
-            var tasks = _context.Tasks.ToList();
+            var tasks = _context.Tasks.AsQueryable();
 
             if (!string.IsNullOrEmpty(status) && Enum.TryParse<Models.TaskStatus>(status, out var statusValue))
             {
-                tasks = tasks.Where(t => t.Status == statusValue).ToList();
+                tasks = tasks.Where(t => t.Status == statusValue);
             }
 
+            if (!string.IsNullOrEmpty(priority) && Enum.TryParse<TaskPriority>(priority, out var priorityValue))
+            {
+                tasks = tasks.Where(t => t.Priority == priorityValue);
+            }
+
+            var taskList = await tasks
+                .OrderByDescending(t => t.Priority)
+                .ThenBy(t => t.Deadline)
+                .ToListAsync();
+
             ViewBag.CurrentStatus = status;
-            return View(tasks);
+            ViewBag.CurrentPriority = priority;
+
+            return View(taskList);
         }
 
-        public IActionResult Details(int id)
+        public async Task<IActionResult> Details(int? id)
         {
-            var task = _context.Tasks.FirstOrDefault(t => t.Id == id);
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var task = await _context.Tasks
+                .FirstOrDefaultAsync(m => m.Id == id);
+
             if (task == null)
             {
                 return NotFound();
             }
+
             return View(task);
         }
 
+       
         public IActionResult Create()
         {
             return View();
         }
 
+        
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create([Bind("Title,Description,Priority,Deadline,Creator,Assignee")] Models.Task task)
+        public async Task<IActionResult> Create([Bind("Title,Description,Priority,Status,Deadline,Creator,Assignee,Progress")] Models.Task task)
         {
             if (ModelState.IsValid)
             {
                 task.CreatedAt = DateTime.Now;
-                _context.Tasks.Add(task);
-                _context.SaveChanges();
+                _context.Add(task);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Задача успешно создана!";
                 return RedirectToAction(nameof(Index));
             }
             return View(task);
         }
 
-        public IActionResult Edit(int id)
+     
+        public async Task<IActionResult> Edit(int? id)
         {
-            var task = _context.Tasks.FirstOrDefault(t => t.Id == id);
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var task = await _context.Tasks.FindAsync(id);
             if (task == null)
             {
                 return NotFound();
@@ -65,9 +94,10 @@ namespace TaskFlow.Controllers
             return View(task);
         }
 
+   
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(int id, [Bind("Id,Title,Description,Priority,Status,Deadline,CompletedAt,Creator,Assignee")] Models.Task task)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,Description,Priority,Status,Deadline,CompletedAt,Creator,Assignee,Progress")] Models.Task task)
         {
             if (id != task.Id)
             {
@@ -78,8 +108,19 @@ namespace TaskFlow.Controllers
             {
                 try
                 {
+                   
+                    if (task.Status == Models.TaskStatus.Completed && task.CompletedAt == null)
+                    {
+                        task.CompletedAt = DateTime.Now;
+                    }
+                    else if (task.Status != Models.TaskStatus.Completed)
+                    {
+                        task.CompletedAt = null;
+                    }
+
                     _context.Update(task);
-                    _context.SaveChanges();
+                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Задача успешно обновлена!";
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -99,13 +140,57 @@ namespace TaskFlow.Controllers
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public IActionResult DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var task = _context.Tasks.FirstOrDefault(t => t.Id == id);
+            var task = await _context.Tasks.FindAsync(id);
             if (task != null)
             {
                 _context.Tasks.Remove(task);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Задача удалена!";
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateStatus(int id, Models.TaskStatus status)
+        {
+            var task = await _context.Tasks.FindAsync(id);
+            if (task != null)
+            {
+                task.Status = status;
+
+                if (status == Models.TaskStatus.Completed)
+                {
+                    task.CompletedAt = DateTime.Now;
+                    task.Progress = 100;
+                }
+                else if (status == Models.TaskStatus.Cancelled)
+                {
+                    task.CompletedAt = null;
+                }
+
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateProgress(int id, int progress)
+        {
+            var task = await _context.Tasks.FindAsync(id);
+            if (task != null)
+            {
+                task.Progress = progress;
+
+                if (progress == 100 && task.Status != Models.TaskStatus.Completed)
+                {
+                    task.Status = Models.TaskStatus.Completed;
+                    task.CompletedAt = DateTime.Now;
+                }
+
+                await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));
         }

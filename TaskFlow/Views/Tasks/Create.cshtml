@@ -4,30 +4,29 @@
     ViewData["Title"] = "Создать задачу";
 }
 
-<nav aria-label="breadcrumb">
+<nav aria-label="breadcrumb" class="mb-3">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a asp-action="Index">Задачи</a></li>
-        <li class="breadcrumb-item active">Создать</li>
+        <li class="breadcrumb-item"><a asp-action="Index">Список задач</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Создать задачу</li>
     </ol>
 </nav>
 
-<h1>📝 Создать новую задачу</h1>
-<hr />
+<h1 class="mb-4">📝 Создать новую задачу</h1>
 
 <div class="row">
-    <div class="col-md-6">
+    <div class="col-md-8">
         <form asp-action="Create">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
             <div class="mb-3">
                 <label asp-for="Title" class="form-label"></label>
-                <input asp-for="Title" class="form-control" />
+                <input asp-for="Title" class="form-control" placeholder="Введите название задачи" />
                 <span asp-validation-for="Title" class="text-danger"></span>
             </div>
 
             <div class="mb-3">
                 <label asp-for="Description" class="form-label"></label>
-                <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                <textarea asp-for="Description" class="form-control" rows="4" placeholder="Введите описание задачи (необязательно)"></textarea>
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
 
@@ -56,6 +55,14 @@
                 <label asp-for="Deadline" class="form-label"></label>
                 <input asp-for="Deadline" class="form-control" type="datetime-local" />
                 <span asp-validation-for="Deadline" class="text-danger"></span>
+                <small class="text-muted">Оставьте пустым, если дедлайн не установлен</small>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Progress" class="form-label"></label>
+                <input asp-for="Progress" class="form-control" type="number" min="0" max="100" value="0" />
+                <span asp-validation-for="Progress" class="text-danger"></span>
+                <small class="text-muted">Процент выполнения (0-100)</small>
             </div>
 
             <div class="mb-3">
@@ -71,8 +78,12 @@
             </div>
 
             <div class="mb-3">
-                <input type="submit" value="Создать" class="btn btn-primary" />
-                <a asp-action="Index" class="btn btn-secondary">Отмена</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i> Создать
+                </button>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Отмена
+                </a>
             </div>
         </form>
     </div>
